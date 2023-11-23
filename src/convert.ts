@@ -7,7 +7,7 @@ type JsonSchema = {
 };
 
 export const ebnfBase = `
-value  ::= object | array | string | number | ("true" | "false" | "null") ws
+value  ::= object | array | string | number | (boolean | null) ws
 
 object ::=
   "{" ws (
@@ -27,7 +27,10 @@ string ::=
     "\\\\" (["\\\\/bfnrt] | "u" [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F]) # escapes
   )* "\\""
 
-number ::= ("-"? ([0-9] | [1-9] [0-9]*)) ("." [0-9]+)? ([eE] [-+]? [0-9]+)? ws
+number ::= ("-"? ([0-9] | [1-9] [0-9]*)) ("." [0-9]+)? ([eE] [-+]? [0-9]+)?
+integer ::= ("-"? ([0-9] | [1-9] [0-9]*))
+boolean ::= ("true" | "false")
+null ::= "null"
 
 # Optional space: by convention, applied in this grammar after literal chars when allowed
 ws ::= ([ \\t\\n] ws)?
@@ -74,7 +77,9 @@ export function convertJsonSchemaToGbnf(jsonSchema: JsonSchema): string {
         return;
       }
 
-      if (["string", "number", "boolean", "null"].includes(schema.type)) {
+      if (
+        ["string", "number", "integer", "boolean", "null"].includes(schema.type)
+      ) {
         gbnf[propertyGbnfName] = `"\\"${keyIndex}\\"" ":" ws01 ${schema.type}`;
         return;
       }

@@ -1,6 +1,22 @@
 #!/usr/bin/env bash
 
-JSON_SCHEMA='{"type":"object","properties":{"name":{"type":"string"},"size":{"type":"number"}}}'
+JSON_SCHEMA='{
+    "type": "object",
+    "properties": {
+        "name": {
+            "type": "string"
+        },
+        "population": {
+            "type": "integer"
+        },
+        "touristic": {
+            "type": "boolean"
+        },
+        "area": {
+            "type": "number"
+        }
+    }
+}'
 JSON_SCHEMA="${1:-$JSON_SCHEMA}"
 
 USER="New york city."
