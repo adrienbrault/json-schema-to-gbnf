@@ -13,7 +13,8 @@ test("Convert Schema with one string property", () => {
   };
 
   const expectedGbnf = `
-root ::= "{" ws01 "\\"name\\"" ":" ws01 string "}" ws01
+root-name ::= "\\"name\\"" ":" ws01 string
+root ::= "{" ws01 root-name "}" ws01
 
 ${ebnfBase}
 `;
@@ -38,7 +39,9 @@ test("Convert Schema with two properties", () => {
   };
 
   const expectedGbnf = `
-root ::= "{" ws01 "\\"name\\"" ":" ws01 string "," ws01 "\\"age\\"" ":" ws01 number "}" ws01
+root-name ::= "\\"name\\"" ":" ws01 string
+root-age ::= "\\"age\\"" ":" ws01 number
+root ::= "{" ws01 root-name "," ws01 root-age "}" ws01
 
 ${ebnfBase}
 `;

@@ -43,7 +43,9 @@ export function convertJsonSchemaToGbnf(jsonSchema: JsonSchema): string {
   for (const propName in jsonSchema.properties) {
     const propType = jsonSchema.properties[propName].type;
 
-    objectDefinition.push(`"\\"${propName}\\"" ":" ws01 ${propType}`);
+    const propertyGbnfName = `root-${propName}`;
+    gbnf[propertyGbnfName] = `"\\"${propName}\\"" ":" ws01 ${propType}`;
+    objectDefinition.push(propertyGbnfName);
   }
 
   gbnf["root"] = [
