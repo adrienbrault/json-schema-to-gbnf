@@ -1,3 +1,5 @@
+import traverse, { SchemaObject } from "json-schema-traverse";
+
 type JsonSchema = {
   type: string;
   properties?: { [key: string]: { type: string } };
@@ -31,28 +33,53 @@ number ::= ("-"? ([0-9] | [1-9] [0-9]*)) ("." [0-9]+)? ([eE] [-+]? [0-9]+)? ws
 ws ::= ([ \\t\\n] ws)?
 ws01 ::= ([ \\t\\n])?`;
 
-export function convertJsonSchemaToGbnf(jsonSchema: JsonSchema): string {
-  if (jsonSchema.type !== "object" || !jsonSchema.properties) {
-    throw new Error("Currently, only simple object schemas are supported");
+function jsonPointerToGbnfName(jsonPtr: string): string {
+  if ("" === jsonPtr) {
+    return "root";
   }
 
+  return (
+    "root" +
+    jsonPtr.replace(/\/properties/g, "").replace(/[^a-zA-Z0-9-]+/g, "-")
+  );
+}
+
+export function convertJsonSchemaToGbnf(jsonSchema: JsonSchema): string {
   type Gbnf = { [key: string]: string };
   let gbnf: Gbnf = {};
 
-  const objectDefinition = [];
-  for (const propName in jsonSchema.properties) {
-    const propType = jsonSchema.properties[propName].type;
+  traverse(
+    jsonSchema,
+    (
+      schema: SchemaObject,
+      jsonPtr: string,
+      rootSchema: SchemaObject,
+      parentJsonPtr?: string,
+      parentKeyword?: string,
+      parentSchema?: SchemaObject,
+      keyIndex?: string | number
+    ) => {
+      let propertyGbnfName = jsonPointerToGbnfName(jsonPtr);
 
-    const propertyGbnfName = `root-${propName}`;
-    gbnf[propertyGbnfName] = `"\\"${propName}\\"" ":" ws01 ${propType}`;
-    objectDefinition.push(propertyGbnfName);
-  }
+      if ("object" === schema.type) {
+        gbnf[propertyGbnfName] = [
+          '"{" ws01',
+          Object.keys(schema.properties)
+            .map((property) =>
+              jsonPointerToGbnfName(`${jsonPtr}/properties/${property}`)
+            )
+            .join(` "," ws01 `),
+          '"}" ws01',
+        ].join(" ");
+        return;
+      }
 
-  gbnf["root"] = [
-    '"{" ws01',
-    objectDefinition.join(` "," ws01 `),
-    '"}" ws01',
-  ].join(" ");
+      if (["string", "number", "boolean", "null"].includes(schema.type)) {
+        gbnf[propertyGbnfName] = `"\\"${keyIndex}\\"" ":" ws01 ${schema.type}`;
+        return;
+      }
+    }
+  );
 
   return [
     ...Object.entries(gbnf).map(([name, content]) => `${name} ::= ${content}`),
