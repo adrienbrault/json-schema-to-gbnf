@@ -66,8 +66,9 @@ export function convertJsonSchemaToGbnf(jsonSchema: JsonSchema): string {
 
       if ("object" === schema.type) {
         gbnf[propertyGbnfName] = [
+          ...(keyIndex !== undefined ? [`"\\"${keyIndex}\\":" ws01`] : []),
           '"{" ws01',
-          Object.keys(schema.properties)
+          Object.keys(schema.properties ?? {})
             .map((property) =>
               jsonPointerToGbnfName(`${jsonPtr}/properties/${property}`)
             )
@@ -80,7 +81,7 @@ export function convertJsonSchemaToGbnf(jsonSchema: JsonSchema): string {
       if (
         ["string", "number", "integer", "boolean", "null"].includes(schema.type)
       ) {
-        gbnf[propertyGbnfName] = `"\\"${keyIndex}\\"" ":" ws01 ${schema.type}`;
+        gbnf[propertyGbnfName] = `"\\"${keyIndex}\\":" ws01 ${schema.type}`;
         return;
       }
     }
