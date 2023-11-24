@@ -112,6 +112,13 @@ export function convertJsonSchemaToGbnf(jsonSchema: JsonSchema): string {
           ")";
         return;
       }
+
+      if (schema.const !== undefined) {
+        gbnf[propertyGbnfName] = `${formatProperty(keyIndex) ?? ""}"${
+          schema.const
+        }"`;
+        return;
+      }
     }
   );
 

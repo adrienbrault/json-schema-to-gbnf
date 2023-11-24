@@ -137,3 +137,19 @@ ${ebnfBase}
 
   expect(resultGbnf).toBe(expectedGbnf.trim());
 });
+
+test("Convert Schema with const", () => {
+  const jsonSchema = {
+    const: "foo",
+  };
+
+  const expectedGbnf = `
+root ::= "foo"
+
+${ebnfBase}
+`;
+
+  const resultGbnf = convertJsonSchemaToGbnf(jsonSchema);
+
+  expect(resultGbnf).toBe(expectedGbnf.trim());
+});
