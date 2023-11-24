@@ -2,6 +2,7 @@
   "name": "json-schema-to-gbnf",
   "module": "index.ts",
   "type": "module",
+  "license": "MIT",
   "devDependencies": {
     "bun-types": "latest"
   },
