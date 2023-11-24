@@ -25,6 +25,12 @@ JSON_SCHEMA='{
                     "type": "string"
                 }
             }
+        },
+        "nicknames": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
         }
     }
 }'

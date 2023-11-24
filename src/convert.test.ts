@@ -92,3 +92,32 @@ ${ebnfBase}
 
   expect(resultGbnf).toBe(expectedGbnf.trim());
 });
+
+test("Convert Schema with arrays", () => {
+  const jsonSchema = {
+    type: "object",
+    properties: {
+      notes: {
+        type: "array",
+      },
+      ages: {
+        type: "array",
+        items: {
+          type: "integer",
+        },
+      },
+    },
+  };
+
+  const expectedGbnf = `
+root ::= "{" ws01 root-notes "," ws01 root-ages "}" ws01
+root-notes ::= "\\"notes\\":" ws01 array
+root-ages ::= "\\"ages\\":" ws01 "[" ws01 (integer (ws01 "," ws01 integer)*)? ws01 "]"
+
+${ebnfBase}
+`;
+
+  const resultGbnf = convertJsonSchemaToGbnf(jsonSchema);
+
+  expect(resultGbnf).toBe(expectedGbnf.trim());
+});

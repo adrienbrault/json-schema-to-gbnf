@@ -16,9 +16,9 @@ object ::=
   )? "}"
 
 array  ::=
-  "[" ws (
+  "[" ws01 (
             value
-    ("," ws value)*
+    ("," ws01 value)*
   )? "]"
 
 string ::=
@@ -88,9 +88,25 @@ export function convertJsonSchemaToGbnf(jsonSchema: JsonSchema): string {
       }
 
       if (
-        ["string", "number", "integer", "boolean", "null"].includes(schema.type)
+        ["string", "number", "integer", "boolean", "null"].includes(
+          schema.type
+        ) &&
+        parentSchema?.type !== "array"
       ) {
         gbnf[propertyGbnfName] = `${formatProperty(keyIndex)}${schema.type}`;
+        return;
+      }
+
+      if (schema.type === "array") {
+        console.log();
+        if (!schema.items?.type) {
+          gbnf[propertyGbnfName] = (formatProperty(keyIndex) ?? "") + "array";
+        } else {
+          // value ("," ws01 value)*
+          gbnf[propertyGbnfName] =
+            (formatProperty(keyIndex) ?? "") +
+            `"[" ws01 (${schema.items?.type} (ws01 "," ws01 ${schema.items?.type})*)? ws01 "]"`;
+        }
         return;
       }
     }
