@@ -226,7 +226,7 @@ test("Convert object Schema with a string that has a minLength", () => {
   };
 
   const expectedGbnf = `
-root ::= "\\"" string-char string-char string-char string-char string-char+ "\\"" ws01
+root ::= "\\"" string-char string-char string-char string-char string-char string-char* "\\"" ws01
 
 ${ebnfBase}
 `;
@@ -262,6 +262,58 @@ test("Convert object Schema with a string that has a minLength and maxLength", (
 
   const expectedGbnf = `
 root ::= "\\"" string-char string-char string-char string-char? string-char? "\\"" ws01
+
+${ebnfBase}
+`;
+
+  const resultGbnf = convertJsonSchemaToGbnf(jsonSchema);
+
+  expect(resultGbnf).toBe(expectedGbnf.trim());
+});
+
+test("Convert Schema array with minItems", () => {
+  const jsonSchema = {
+    type: "array",
+    minItems: 3,
+  };
+
+  const expectedGbnf = `
+root ::= "[" ws01 value "," ws01 value "," ws01 value ("," ws01 value)* ws01 "]" ws01
+
+${ebnfBase}
+`;
+
+  const resultGbnf = convertJsonSchemaToGbnf(jsonSchema);
+
+  expect(resultGbnf).toBe(expectedGbnf.trim());
+});
+
+test("Convert Schema array with maxItems", () => {
+  const jsonSchema = {
+    type: "array",
+    maxItems: 3,
+  };
+
+  const expectedGbnf = `
+root ::= "[" ws01 (value)? ("," ws01 value)? ("," ws01 value)? ws01 "]" ws01
+
+${ebnfBase}
+`;
+
+  const resultGbnf = convertJsonSchemaToGbnf(jsonSchema);
+
+  expect(resultGbnf).toBe(expectedGbnf.trim());
+});
+
+test("Convert Schema array with minItems and maxItems", () => {
+  const jsonSchema = {
+    type: "array",
+    minItems: 3,
+    maxItems: 5,
+  };
+
+  const expectedGbnf = `
+root ::= "[" ws01 value "," ws01 value "," ws01 value ("," ws01 value)? ("," ws01 value)? ws01 "]" ws01
 
 ${ebnfBase}
 `;

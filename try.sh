@@ -30,7 +30,8 @@ JSON_SCHEMA='{
             "type": "array",
             "items": {
                 "type": "string"
-            }
+            },
+            "minItems": 7
         },
         "weather": {
             "type": "string",

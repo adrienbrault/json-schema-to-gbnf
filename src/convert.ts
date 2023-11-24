@@ -71,6 +71,61 @@ export function convertJsonSchemaToGbnf(jsonSchema: JsonSchema): string {
       const formatAlternatives = (values: string[]) =>
         `(${values.join(" | ")})`;
 
+      const formatStringLength = (
+        value: string,
+        minLength: number | undefined,
+        maxLength: number | undefined
+      ) => {
+        if (minLength && maxLength) {
+          return new Array(maxLength)
+            .fill(value)
+            .map(
+              (value, index) =>
+                value + (minLength && index + 1 > minLength ? "?" : "")
+            )
+            .join(" ");
+        }
+
+        if (minLength) {
+          return new Array(minLength).fill(value).join(" ") + ` ${value}*`;
+        }
+
+        if (maxLength) {
+          return new Array(maxLength).fill(`${value}?`).join(" ");
+        }
+      };
+
+      const formatArrayLength = (
+        value: string,
+        minItems: number | undefined,
+        maxItems: number | undefined
+      ) => {
+        const joinDelimiter = ` "," ws01 `;
+        if (minItems && maxItems) {
+          return (
+            new Array(minItems).fill(value).join(joinDelimiter) +
+            " " +
+            new Array(maxItems - minItems)
+              .fill(`("," ws01 ${value})?`)
+              .join(" ")
+          );
+        }
+
+        if (minItems) {
+          return (
+            new Array(minItems).fill(value).join(joinDelimiter) +
+            ` ("," ws01 ${value})*`
+          );
+        }
+
+        if (maxItems) {
+          return (
+            `(${value})? ` +
+            new Array(maxItems - 1).fill(`("," ws01 ${value})?`).join(" ")
+          );
+        }
+      };
+
       if ("object" === schema.type) {
         if (!schema.properties) {
           gbnf[propertyGbnfName] = formatProperty(keyIndex) + "object";
@@ -108,39 +163,16 @@ export function convertJsonSchemaToGbnf(jsonSchema: JsonSchema): string {
 
       if (
         "string" === schema.type &&
-        "maxLength" in schema &&
-        "minLength" in schema
+        ("maxLength" in schema || "minLength" in schema)
       ) {
         gbnf[propertyGbnfName] =
           formatProperty(keyIndex) +
           `"\\"" ` +
-          new Array(schema.maxLength)
-            .fill("string-char")
-            .map(
-              (value, index) =>
-                value +
-                (schema.minLength && index + 1 > schema.minLength ? "?" : "")
-            )
-            .join(" ") +
-          ` "\\""`;
-        return;
-      }
-
-      if ("string" === schema.type && "minLength" in schema) {
-        gbnf[propertyGbnfName] =
-          formatProperty(keyIndex) +
-          `"\\"" ` +
-          new Array(schema.minLength).fill("string-char").join(" ") +
-          "+" +
-          ` "\\""`;
-        return;
-      }
-
-      if ("string" === schema.type && "maxLength" in schema) {
-        gbnf[propertyGbnfName] =
-          formatProperty(keyIndex) +
-          `"\\"" ` +
-          new Array(schema.maxLength).fill("string-char?").join(" ") +
+          formatStringLength(
+            "string-char",
+            schema.minLength,
+            schema.maxLength
+          ) +
           ` "\\""`;
         return;
       }
@@ -156,12 +188,22 @@ export function convertJsonSchemaToGbnf(jsonSchema: JsonSchema): string {
       }
 
       if (schema.type === "array") {
-        if (!schema.items?.type) {
-          gbnf[propertyGbnfName] = formatProperty(keyIndex) + "array";
-        } else {
+        if ("minItems" in schema || "maxItems" in schema) {
           gbnf[propertyGbnfName] =
             formatProperty(keyIndex) +
-            `"[" ws01 (${schema.items?.type} (ws01 "," ws01 ${schema.items?.type})*)? ws01 "]"`;
+            `"[" ws01 ${formatArrayLength(
+              schema.items?.type ?? "value",
+              schema.minItems,
+              schema.maxItems
+            )} ws01 "]"`;
+        } else {
+          if (!schema.items?.type) {
+            gbnf[propertyGbnfName] = formatProperty(keyIndex) + "array";
+          } else {
+            gbnf[propertyGbnfName] =
+              formatProperty(keyIndex) +
+              `"[" ws01 (${schema.items?.type} (ws01 "," ws01 ${schema.items?.type})*)? ws01 "]"`;
+          }
         }
         return;
       }
