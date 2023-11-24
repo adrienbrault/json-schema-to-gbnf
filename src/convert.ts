@@ -70,6 +70,11 @@ export function convertJsonSchemaToGbnf(jsonSchema: JsonSchema): string {
         typeof value === "string" ? `"\\"${value}\\""` : `"${value}"`;
 
       if ("object" === schema.type) {
+        if (!schema.properties) {
+          gbnf[propertyGbnfName] = (formatProperty(keyIndex) ?? "") + "object";
+          return;
+        }
+
         gbnf[propertyGbnfName] =
           (formatProperty(keyIndex) ?? "") +
           '"{" ws01 ' +

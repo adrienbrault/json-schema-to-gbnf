@@ -186,3 +186,19 @@ ${ebnfBase}
 
   expect(resultGbnf).toBe(expectedGbnf.trim());
 });
+
+test("Convert object Schema without properties", () => {
+  const jsonSchema = {
+    type: "object",
+  };
+
+  const expectedGbnf = `
+root ::= object ws01
+
+${ebnfBase}
+`;
+
+  const resultGbnf = convertJsonSchemaToGbnf(jsonSchema);
+
+  expect(resultGbnf).toBe(expectedGbnf.trim());
+});
