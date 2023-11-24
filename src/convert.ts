@@ -69,6 +69,9 @@ export function convertJsonSchemaToGbnf(jsonSchema: JsonSchema): string {
       const formatLiteral = (value: string | number | boolean) =>
         typeof value === "string" ? `"\\"${value}\\""` : `"${value}"`;
 
+      const formatAlternatives = (values: string[]) =>
+        `(${values.join(" | ")})`;
+
       if ("object" === schema.type) {
         if (!schema.properties) {
           gbnf[propertyGbnfName] = formatProperty(keyIndex) + "object";
@@ -92,16 +95,15 @@ export function convertJsonSchemaToGbnf(jsonSchema: JsonSchema): string {
       }
 
       if (Array.isArray(schema.enum)) {
-        gbnf[propertyGbnfName] = `${formatProperty(keyIndex)}(${schema.enum
-          .map(formatLiteral)
-          .join(" | ")})`;
+        gbnf[propertyGbnfName] =
+          formatProperty(keyIndex) +
+          formatAlternatives(schema.enum.map(formatLiteral));
         return;
       }
 
       if (Array.isArray(schema.type)) {
-        gbnf[propertyGbnfName] = `${formatProperty(
-          keyIndex
-        )}(${schema.type.join(" | ")})`;
+        gbnf[propertyGbnfName] =
+          formatProperty(keyIndex) + formatAlternatives(schema.type);
         return;
       }
 
@@ -111,7 +113,7 @@ export function convertJsonSchemaToGbnf(jsonSchema: JsonSchema): string {
         ) &&
         ["properties", undefined].includes(parentKeyword)
       ) {
-        gbnf[propertyGbnfName] = `${formatProperty(keyIndex)}${schema.type}`;
+        gbnf[propertyGbnfName] = formatProperty(keyIndex) + schema.type;
         return;
       }
 
@@ -128,10 +130,10 @@ export function convertJsonSchemaToGbnf(jsonSchema: JsonSchema): string {
 
       if (Array.isArray(schema.anyOf)) {
         gbnf[propertyGbnfName] =
-          (formatProperty(keyIndex) ?? "") +
-          "(" +
-          schema.anyOf.map((anyOfSchema) => anyOfSchema.type).join(" | ") +
-          ")";
+          formatProperty(keyIndex) +
+          formatAlternatives(
+            schema.anyOf.map((anyOfSchema) => anyOfSchema.type)
+          );
         return;
       }
 
