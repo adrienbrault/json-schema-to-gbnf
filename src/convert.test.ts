@@ -322,3 +322,20 @@ ${ebnfBase}
 
   expect(resultGbnf).toBe(expectedGbnf.trim());
 });
+
+test("Convert Schema nullable string", () => {
+  const jsonSchema = {
+    type: "string",
+    nullable: true,
+  };
+
+  const expectedGbnf = `
+root ::= (string | null) ws01
+
+${ebnfBase}
+`;
+
+  const resultGbnf = convertJsonSchemaToGbnf(jsonSchema);
+
+  expect(resultGbnf).toBe(expectedGbnf.trim());
+});

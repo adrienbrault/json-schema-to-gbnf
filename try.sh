@@ -12,8 +12,9 @@ JSON_SCHEMA='{
         "touristic": {
             "type": "boolean"
         },
-        "area": {
-            "type": "number"
+        "wtf": {
+            "type": "string",
+            "nullable": true
         },
         "mayor": {
             "type": "object",
@@ -29,7 +30,8 @@ JSON_SCHEMA='{
         "nicknames": {
             "type": "array",
             "items": {
-                "type": "string"
+                "type": "string",
+                "nullable": true
             },
             "minItems": 7
         },
