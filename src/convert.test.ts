@@ -121,3 +121,19 @@ ${ebnfBase}
 
   expect(resultGbnf).toBe(expectedGbnf.trim());
 });
+
+test("Convert Schema with anyOf", () => {
+  const jsonSchema = {
+    anyOf: [{ type: "string" }, { type: "boolean" }],
+  };
+
+  const expectedGbnf = `
+root ::= (string | boolean)
+
+${ebnfBase}
+`;
+
+  const resultGbnf = convertJsonSchemaToGbnf(jsonSchema);
+
+  expect(resultGbnf).toBe(expectedGbnf.trim());
+});

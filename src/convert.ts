@@ -1,10 +1,6 @@
 import traverse, { SchemaObject } from "json-schema-traverse";
 
-type JsonSchema = {
-  type: string;
-  properties?: { [key: string]: { type: string } };
-  required?: string[];
-};
+type JsonSchema = { [key: string]: any };
 
 export const ebnfBase = `
 value  ::= object | array | string | number | (boolean | null) ws
@@ -91,22 +87,29 @@ export function convertJsonSchemaToGbnf(jsonSchema: JsonSchema): string {
         ["string", "number", "integer", "boolean", "null"].includes(
           schema.type
         ) &&
-        parentSchema?.type !== "array"
+        ["properties", undefined].includes(parentKeyword)
       ) {
         gbnf[propertyGbnfName] = `${formatProperty(keyIndex)}${schema.type}`;
         return;
       }
 
       if (schema.type === "array") {
-        console.log();
         if (!schema.items?.type) {
           gbnf[propertyGbnfName] = (formatProperty(keyIndex) ?? "") + "array";
         } else {
-          // value ("," ws01 value)*
           gbnf[propertyGbnfName] =
             (formatProperty(keyIndex) ?? "") +
             `"[" ws01 (${schema.items?.type} (ws01 "," ws01 ${schema.items?.type})*)? ws01 "]"`;
         }
+        return;
+      }
+
+      if (Array.isArray(schema.anyOf)) {
+        gbnf[propertyGbnfName] =
+          (formatProperty(keyIndex) ?? "") +
+          "(" +
+          schema.anyOf.map((anyOfSchema) => anyOfSchema.type).join(" | ") +
+          ")";
         return;
       }
     }
