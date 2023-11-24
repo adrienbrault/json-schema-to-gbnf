@@ -235,3 +235,38 @@ ${ebnfBase}
 
   expect(resultGbnf).toBe(expectedGbnf.trim());
 });
+
+test("Convert object Schema with a string that has a maxLength", () => {
+  const jsonSchema = {
+    type: "string",
+    maxLength: 5,
+  };
+
+  const expectedGbnf = `
+root ::= "\\"" string-char? string-char? string-char? string-char? string-char? "\\"" ws01
+
+${ebnfBase}
+`;
+
+  const resultGbnf = convertJsonSchemaToGbnf(jsonSchema);
+
+  expect(resultGbnf).toBe(expectedGbnf.trim());
+});
+
+test("Convert object Schema with a string that has a minLength and maxLength", () => {
+  const jsonSchema = {
+    type: "string",
+    minLength: 3,
+    maxLength: 5,
+  };
+
+  const expectedGbnf = `
+root ::= "\\"" string-char string-char string-char string-char? string-char? "\\"" ws01
+
+${ebnfBase}
+`;
+
+  const resultGbnf = convertJsonSchemaToGbnf(jsonSchema);
+
+  expect(resultGbnf).toBe(expectedGbnf.trim());
+});

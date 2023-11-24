@@ -106,12 +106,41 @@ export function convertJsonSchemaToGbnf(jsonSchema: JsonSchema): string {
         return;
       }
 
+      if (
+        "string" === schema.type &&
+        "maxLength" in schema &&
+        "minLength" in schema
+      ) {
+        gbnf[propertyGbnfName] =
+          formatProperty(keyIndex) +
+          `"\\"" ` +
+          new Array(schema.maxLength)
+            .fill("string-char")
+            .map(
+              (value, index) =>
+                value +
+                (schema.minLength && index + 1 > schema.minLength ? "?" : "")
+            )
+            .join(" ") +
+          ` "\\""`;
+        return;
+      }
+
       if ("string" === schema.type && "minLength" in schema) {
         gbnf[propertyGbnfName] =
           formatProperty(keyIndex) +
           `"\\"" ` +
           new Array(schema.minLength).fill("string-char").join(" ") +
           "+" +
+          ` "\\""`;
+        return;
+      }
+
+      if ("string" === schema.type && "maxLength" in schema) {
+        gbnf[propertyGbnfName] =
+          formatProperty(keyIndex) +
+          `"\\"" ` +
+          new Array(schema.maxLength).fill("string-char?").join(" ") +
           ` "\\""`;
         return;
       }
