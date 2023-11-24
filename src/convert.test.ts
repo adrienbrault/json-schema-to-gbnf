@@ -44,11 +44,11 @@ test("Convert Schema with two properties", () => {
         type: "number",
       },
     },
-    required: ["name"],
+    required: ["name", "age"],
   };
 
   const expectedGbnf = `
-root ::= "{" ws01 root-name "," ws01 root-age "," ws01 root-active "," ws01 root-nullable "," ws01 root-weight "}" ws01
+root ::= "{" ws01 root-name "," ws01 root-age ("," ws01 root-active)? ("," ws01 root-nullable)? ("," ws01 root-weight)? "}" ws01
 root-name ::= "\\"name\\":" ws01 string
 root-age ::= "\\"age\\":" ws01 integer
 root-active ::= "\\"active\\":" ws01 boolean
@@ -74,9 +74,10 @@ test("Convert Schema with nested objects", () => {
             type: "string",
           },
         },
+        required: ["name"],
       },
     },
-    required: ["name"],
+    required: ["friend"],
   };
 
   const expectedGbnf = `

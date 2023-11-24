@@ -64,24 +64,33 @@ export function convertJsonSchemaToGbnf(jsonSchema: JsonSchema): string {
     ) => {
       let propertyGbnfName = jsonPointerToGbnfName(jsonPtr);
 
+      const formatProperty = (property: string | number | undefined) =>
+        undefined !== property ? `"\\"${property}\\":" ws01 ` : null;
+
+      const formatRequired = (value: string, required: boolean) =>
+        required ? value : `(${value})?`;
+
       if ("object" === schema.type) {
-        gbnf[propertyGbnfName] = [
-          ...(keyIndex !== undefined ? [`"\\"${keyIndex}\\":" ws01`] : []),
-          '"{" ws01',
+        gbnf[propertyGbnfName] =
+          (formatProperty(keyIndex) ?? "") +
+          '"{" ws01 ' +
           Object.keys(schema.properties ?? {})
-            .map((property) =>
-              jsonPointerToGbnfName(`${jsonPtr}/properties/${property}`)
+            .map((property, index) =>
+              formatRequired(
+                (index === 0 ? "" : '"," ws01 ') +
+                  jsonPointerToGbnfName(`${jsonPtr}/properties/${property}`),
+                schema.required?.includes(property) ?? true
+              )
             )
-            .join(` "," ws01 `),
-          '"}" ws01',
-        ].join(" ");
+            .join(" ") +
+          ' "}" ws01';
         return;
       }
 
       if (
         ["string", "number", "integer", "boolean", "null"].includes(schema.type)
       ) {
-        gbnf[propertyGbnfName] = `"\\"${keyIndex}\\":" ws01 ${schema.type}`;
+        gbnf[propertyGbnfName] = `${formatProperty(keyIndex)}${schema.type}`;
         return;
       }
     }
