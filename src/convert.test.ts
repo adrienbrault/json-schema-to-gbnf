@@ -202,3 +202,19 @@ ${ebnfBase}
 
   expect(resultGbnf).toBe(expectedGbnf.trim());
 });
+
+test("Convert object Schema without properties", () => {
+  const jsonSchema = {
+    type: ["string", "null"],
+  };
+
+  const expectedGbnf = `
+root ::= (string | null) ws01
+
+${ebnfBase}
+`;
+
+  const resultGbnf = convertJsonSchemaToGbnf(jsonSchema);
+
+  expect(resultGbnf).toBe(expectedGbnf.trim());
+});

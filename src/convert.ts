@@ -3,7 +3,7 @@ import traverse, { SchemaObject } from "json-schema-traverse";
 type JsonSchema = { [key: string]: any };
 
 export const ebnfBase = `
-value  ::= object | array | string | number | (boolean | null) ws
+value  ::= (object | array | string | number | boolean | null) ws
 
 object ::=
   "{" ws (
@@ -23,7 +23,7 @@ string ::=
     "\\\\" (["\\\\/bfnrt] | "u" [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F]) # escapes
   )* "\\""
 
-number ::= ("-"? ([0-9] | [1-9] [0-9]*)) ("." [0-9]+)? ([eE] [-+]? [0-9]+)?
+number ::= integer ("." [0-9]+)? ([eE] [-+]? [0-9]+)?
 integer ::= ("-"? ([0-9] | [1-9] [0-9]*))
 boolean ::= ("true" | "false")
 null ::= "null"
@@ -61,7 +61,7 @@ export function convertJsonSchemaToGbnf(jsonSchema: JsonSchema): string {
       let propertyGbnfName = jsonPointerToGbnfName(jsonPtr);
 
       const formatProperty = (property: string | number | undefined) =>
-        undefined !== property ? `${formatLiteral(property)} ":" ws01 ` : null;
+        undefined !== property ? `${formatLiteral(property)} ":" ws01 ` : "";
 
       const formatRequired = (value: string, required: boolean) =>
         required ? value : `(${value})?`;
@@ -71,12 +71,12 @@ export function convertJsonSchemaToGbnf(jsonSchema: JsonSchema): string {
 
       if ("object" === schema.type) {
         if (!schema.properties) {
-          gbnf[propertyGbnfName] = (formatProperty(keyIndex) ?? "") + "object";
+          gbnf[propertyGbnfName] = formatProperty(keyIndex) + "object";
           return;
         }
 
         gbnf[propertyGbnfName] =
-          (formatProperty(keyIndex) ?? "") +
+          formatProperty(keyIndex) +
           '"{" ws01 ' +
           Object.keys(schema.properties ?? {})
             .map((property, index) =>
@@ -92,9 +92,16 @@ export function convertJsonSchemaToGbnf(jsonSchema: JsonSchema): string {
       }
 
       if (Array.isArray(schema.enum)) {
-        gbnf[propertyGbnfName] = `${
-          formatProperty(keyIndex) ?? ""
-        }(${schema.enum.map(formatLiteral).join(" | ")})`;
+        gbnf[propertyGbnfName] = `${formatProperty(keyIndex)}(${schema.enum
+          .map(formatLiteral)
+          .join(" | ")})`;
+        return;
+      }
+
+      if (Array.isArray(schema.type)) {
+        gbnf[propertyGbnfName] = `${formatProperty(
+          keyIndex
+        )}(${schema.type.join(" | ")})`;
         return;
       }
 
@@ -110,10 +117,10 @@ export function convertJsonSchemaToGbnf(jsonSchema: JsonSchema): string {
 
       if (schema.type === "array") {
         if (!schema.items?.type) {
-          gbnf[propertyGbnfName] = (formatProperty(keyIndex) ?? "") + "array";
+          gbnf[propertyGbnfName] = formatProperty(keyIndex) + "array";
         } else {
           gbnf[propertyGbnfName] =
-            (formatProperty(keyIndex) ?? "") +
+            formatProperty(keyIndex) +
             `"[" ws01 (${schema.items?.type} (ws01 "," ws01 ${schema.items?.type})*)? ws01 "]"`;
         }
         return;
@@ -129,9 +136,9 @@ export function convertJsonSchemaToGbnf(jsonSchema: JsonSchema): string {
       }
 
       if (schema.const !== undefined) {
-        gbnf[propertyGbnfName] = `${
-          formatProperty(keyIndex) ?? ""
-        }${formatLiteral(schema.const)}`;
+        gbnf[propertyGbnfName] = `${formatProperty(keyIndex)}${formatLiteral(
+          schema.const
+        )}`;
         return;
       }
     }
