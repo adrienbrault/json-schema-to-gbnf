@@ -38,6 +38,10 @@ JSON_SCHEMA='{
         "weather": {
             "type": "string",
             "enum": ["sunny", "rainy", "cloudy", "snowy"]
+        },
+        "randomFact": {
+            "type": "string",
+            "pattern": "[0-9]+ \\w+"
         }
     }
 }'

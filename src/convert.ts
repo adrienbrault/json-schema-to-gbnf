@@ -1,4 +1,5 @@
 import traverse, { SchemaObject } from "json-schema-traverse";
+import { convertRegexpToGbnf } from "./regexp-convert";
 
 type JsonSchema = { [key: string]: any };
 
@@ -22,9 +23,9 @@ string ::=
 
 string-char ::= [^"\\\\] | "\\\\" (["\\\\/bfnrt] | "u" [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F]) # escapes
 
-number ::= (integer | "0") ("." [0-9]+)? ([eE] [-+]? [0-9]+)?
-integer ::= ("-"? ([0-9] | [1-9] [0-9]*))
-boolean ::= ("true" | "false")
+number ::= integer ("." [0-9]+)? ([eE] [-+]? [0-9]+)?
+integer ::= "-"? ([0-9] | [1-9] [0-9]*)
+boolean ::= "true" | "false"
 null ::= "null"
 
 # Optional space: by convention, applied in this grammar after literal chars when allowed
@@ -41,6 +42,41 @@ function jsonPointerToGbnfName(jsonPtr: string): string {
     jsonPtr.replace(/\/properties/g, "").replace(/[^a-zA-Z0-9-]+/g, "-")
   );
 }
+
+export const formatLiteral = (value: string | number | boolean) =>
+  typeof value === "string" ? `"\\"${value}\\""` : `"${value}"`;
+
+export const formatAlternatives = (values: string[]) =>
+  `(${values.join(" | ")})`;
+
+export const formatStringLength = (
+  value: string,
+  minLength: number | undefined,
+  maxLength: number | undefined
+) => {
+  if (minLength && maxLength) {
+    return new Array(maxLength)
+      .fill(value)
+      .map(
+        (value, index) =>
+          value + (minLength && index + 1 > minLength ? "?" : "")
+      )
+      .join(" ");
+  }
+
+  if (minLength) {
+    return new Array(minLength).fill(value).join(" ") + ` ${value}*`;
+  }
+
+  if (maxLength) {
+    return new Array(maxLength).fill(`${value}?`).join(" ");
+  }
+
+  throw new Error("Either minLength or maxLength must be defined");
+};
+
+const formatProperty = (property: string | number | undefined) =>
+  undefined !== property ? `${formatLiteral(property)} ":" ws01 ` : "";
 
 export function convertJsonSchemaToGbnf(jsonSchema: JsonSchema): string {
   type Gbnf = { [key: string]: string };
@@ -59,17 +95,8 @@ export function convertJsonSchemaToGbnf(jsonSchema: JsonSchema): string {
     ) => {
       let propertyGbnfName = jsonPointerToGbnfName(jsonPtr);
 
-      const formatProperty = (property: string | number | undefined) =>
-        undefined !== property ? `${formatLiteral(property)} ":" ws01 ` : "";
-
       const formatRequired = (value: string, required: boolean) =>
         required ? value : `(${value})?`;
-
-      const formatLiteral = (value: string | number | boolean) =>
-        typeof value === "string" ? `"\\"${value}\\""` : `"${value}"`;
-
-      const formatAlternatives = (values: string[]) =>
-        `(${values.join(" | ")})`;
 
       const formatNullable = (
         value: string,
@@ -85,30 +112,6 @@ export function convertJsonSchemaToGbnf(jsonSchema: JsonSchema): string {
       const gbnfAdd = (value: string) => {
         gbnf[propertyGbnfName] =
           formatProperty(keyIndex) + formatNullable(value);
-      };
-
-      const formatStringLength = (
-        value: string,
-        minLength: number | undefined,
-        maxLength: number | undefined
-      ) => {
-        if (minLength && maxLength) {
-          return new Array(maxLength)
-            .fill(value)
-            .map(
-              (value, index) =>
-                value + (minLength && index + 1 > minLength ? "?" : "")
-            )
-            .join(" ");
-        }
-
-        if (minLength) {
-          return new Array(minLength).fill(value).join(" ") + ` ${value}*`;
-        }
-
-        if (maxLength) {
-          return new Array(maxLength).fill(`${value}?`).join(" ");
-        }
       };
 
       const formatArrayLength = (
@@ -188,6 +191,10 @@ export function convertJsonSchemaToGbnf(jsonSchema: JsonSchema): string {
             ) +
             ` "\\""`
           );
+        }
+
+        if ("pattern" in schema && schema.type === "string") {
+          return `"\\"" ${convertRegexpToGbnf(schema.pattern)} "\\""`;
         }
 
         if (

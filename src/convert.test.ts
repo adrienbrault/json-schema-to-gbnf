@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { convertJsonSchemaToGbnf, ebnfBase } from "./convert"; // Assuming your converter function is named this way
+import { convertJsonSchemaToGbnf, ebnfBase } from "./convert";
 
 test("Convert Schema with one string property", () => {
   const jsonSchema = {
