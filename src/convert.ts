@@ -22,7 +22,7 @@ string ::=
 
 string-char ::= [^"\\\\] | "\\\\" (["\\\\/bfnrt] | "u" [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F]) # escapes
 
-number ::= integer ("." [0-9]+)? ([eE] [-+]? [0-9]+)?
+number ::= (integer | "0") ("." [0-9]+)? ([eE] [-+]? [0-9]+)?
 integer ::= ("-"? ([0-9] | [1-9] [0-9]*))
 boolean ::= ("true" | "false")
 null ::= "null"
@@ -142,14 +142,18 @@ export function convertJsonSchemaToGbnf(jsonSchema: JsonSchema): string {
         }
       };
 
-      if ("object" === schema.type) {
-        if (!schema.properties) {
-          gbnfAdd("object");
-          return;
-        }
+      const formatSchema = (
+        schema: SchemaObject,
+        jsonPtr: string,
+        parentKeyword?: string
+      ): string | undefined => {
+        if ("object" === schema.type) {
+          if (!schema.properties) {
+            return "object";
+          }
 
-        gbnfAdd(
-          '"{" ws01 ' +
+          return (
+            '"{" ws01 ' +
             Object.keys(schema.properties ?? {})
               .map((property, index) =>
                 formatRequired(
@@ -160,86 +164,81 @@ export function convertJsonSchemaToGbnf(jsonSchema: JsonSchema): string {
               )
               .join(" ") +
             ' "}"'
-        );
-        return;
-      }
+          );
+        }
 
-      if (Array.isArray(schema.enum)) {
-        gbnfAdd(formatAlternatives(schema.enum.map(formatLiteral)));
+        if (Array.isArray(schema.enum)) {
+          return formatAlternatives(schema.enum.map(formatLiteral));
+        }
 
-        return;
-      }
+        if (Array.isArray(schema.type)) {
+          return formatAlternatives(schema.type);
+        }
 
-      if (Array.isArray(schema.type)) {
-        gbnfAdd(formatAlternatives(schema.type));
-        return;
-      }
-
-      if (
-        "string" === schema.type &&
-        ("maxLength" in schema || "minLength" in schema)
-      ) {
-        gbnfAdd(
-          `"\\"" ` +
+        if (
+          "string" === schema.type &&
+          ("maxLength" in schema || "minLength" in schema)
+        ) {
+          return (
+            `"\\"" ` +
             formatStringLength(
               "string-char",
               schema.minLength,
               schema.maxLength
             ) +
             ` "\\""`
-        );
-        return;
-      }
+          );
+        }
 
-      if (
-        ["string", "number", "integer", "boolean", "null"].includes(
-          schema.type
-        ) &&
-        ["properties", undefined].includes(parentKeyword)
-      ) {
-        gbnfAdd(schema.type);
-        return;
-      }
+        if (
+          ["string", "number", "integer", "boolean", "null"].includes(
+            schema.type
+          ) &&
+          ["properties", "items", undefined].includes(parentKeyword)
+        ) {
+          return schema.type;
+        }
 
-      if (schema.type === "array") {
-        if ("minItems" in schema || "maxItems" in schema) {
-          gbnfAdd(
-            `"[" ws01 ${formatArrayLength(
+        if (schema.type === "array") {
+          if ("minItems" in schema || "maxItems" in schema) {
+            return `"[" ws01 ${formatArrayLength(
               formatNullable(
-                schema.items?.type ?? "value",
+                (undefined !== schema.items
+                  ? jsonPointerToGbnfName(jsonPtr + "/items")
+                  : null) ?? "value",
                 schema.items?.nullable
               ),
               schema.minItems,
               schema.maxItems
-            )} ws01 "]"`
-          );
-        } else {
-          if (!schema.items?.type) {
-            gbnfAdd("array");
-          } else {
-            const value = formatNullable(
-              schema.items.type,
-              schema.items?.nullable
-            );
-            gbnfAdd(`"[" ws01 (${value} (ws01 "," ws01 ${value})*)? ws01 "]"`);
+            )} ws01 "]"`;
           }
+          const formatted =
+            undefined !== schema.items
+              ? jsonPointerToGbnfName(jsonPtr + "/items")
+              : null;
+          if (!formatted) {
+            return "array";
+          }
+          const value = formatNullable(formatted, schema.items?.nullable);
+          return `"[" ws01 (${value} (ws01 "," ws01 ${value})*)? ws01 "]"`;
         }
-        return;
-      }
 
-      if (Array.isArray(schema.anyOf)) {
-        gbnfAdd(
-          formatAlternatives(
+        if (schema.const !== undefined) {
+          return formatLiteral(schema.const);
+        }
+
+        if (Array.isArray(schema.anyOf)) {
+          return formatAlternatives(
             schema.anyOf.map((anyOfSchema) => anyOfSchema.type)
-          )
-        );
-        return;
-      }
+          );
+        }
 
-      if (schema.const !== undefined) {
-        gbnfAdd(formatLiteral(schema.const));
+        return undefined;
+      };
 
-        return;
+      const formatted = formatSchema(schema, jsonPtr, parentKeyword);
+      if (formatted !== undefined) {
+        gbnfAdd(formatted);
       }
     }
   );

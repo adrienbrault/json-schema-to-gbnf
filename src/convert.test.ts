@@ -112,7 +112,8 @@ test("Convert Schema with arrays", () => {
   const expectedGbnf = `
 root ::= "{" ws01 root-notes "," ws01 root-ages "}" ws01
 root-notes ::= "\\"notes\\"" ":" ws01 array
-root-ages ::= "\\"ages\\"" ":" ws01 "[" ws01 (integer (ws01 "," ws01 integer)*)? ws01 "]"
+root-ages ::= "\\"ages\\"" ":" ws01 "[" ws01 (root-ages-items (ws01 "," ws01 root-ages-items)*)? ws01 "]"
+root-ages-items ::= integer
 
 ${ebnfBase}
 `;
@@ -331,6 +332,33 @@ test("Convert Schema nullable string", () => {
 
   const expectedGbnf = `
 root ::= (string | null) ws01
+
+${ebnfBase}
+`;
+
+  const resultGbnf = convertJsonSchemaToGbnf(jsonSchema);
+
+  expect(resultGbnf).toBe(expectedGbnf.trim());
+});
+
+test("Convert Schema array of objects with properties", () => {
+  const jsonSchema = {
+    type: "array",
+    items: {
+      type: "object",
+      properties: {
+        name: {
+          type: "string",
+        },
+      },
+      required: ["name"],
+    },
+  };
+
+  const expectedGbnf = `
+root ::= \"[\" ws01 (root-items (ws01 \",\" ws01 root-items)*)? ws01 \"]\" ws01
+root-items ::= \"{\" ws01 root-items-name \"}\"
+root-items-name ::= \"\\\"name\\\"\" \":\" ws01 string
 
 ${ebnfBase}
 `;
