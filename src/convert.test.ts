@@ -218,3 +218,20 @@ ${ebnfBase}
 
   expect(resultGbnf).toBe(expectedGbnf.trim());
 });
+
+test("Convert object Schema with a string that has a minLength", () => {
+  const jsonSchema = {
+    type: "string",
+    minLength: 5,
+  };
+
+  const expectedGbnf = `
+root ::= "\\"" string-char string-char string-char string-char string-char+ "\\"" ws01
+
+${ebnfBase}
+`;
+
+  const resultGbnf = convertJsonSchemaToGbnf(jsonSchema);
+
+  expect(resultGbnf).toBe(expectedGbnf.trim());
+});

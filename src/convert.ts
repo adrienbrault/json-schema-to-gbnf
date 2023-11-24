@@ -18,10 +18,9 @@ array  ::=
   )? "]"
 
 string ::=
-  "\\"" (
-    [^"\\\\] |
-    "\\\\" (["\\\\/bfnrt] | "u" [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F]) # escapes
-  )* "\\""
+  "\\"" (string-char)* "\\""
+
+string-char ::= [^"\\\\] | "\\\\" (["\\\\/bfnrt] | "u" [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F] [0-9a-fA-F]) # escapes
 
 number ::= integer ("." [0-9]+)? ([eE] [-+]? [0-9]+)?
 integer ::= ("-"? ([0-9] | [1-9] [0-9]*))
@@ -104,6 +103,16 @@ export function convertJsonSchemaToGbnf(jsonSchema: JsonSchema): string {
       if (Array.isArray(schema.type)) {
         gbnf[propertyGbnfName] =
           formatProperty(keyIndex) + formatAlternatives(schema.type);
+        return;
+      }
+
+      if ("string" === schema.type && "minLength" in schema) {
+        gbnf[propertyGbnfName] =
+          formatProperty(keyIndex) +
+          `"\\"" ` +
+          new Array(schema.minLength).fill("string-char").join(" ") +
+          "+" +
+          ` "\\""`;
         return;
       }
 
