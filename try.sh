@@ -31,6 +31,10 @@ JSON_SCHEMA='{
             "items": {
                 "type": "string"
             }
+        },
+        "weather": {
+            "type": "string",
+            "enum": ["sunny", "rainy", "cloudy", "snowy"]
         }
     }
 }'

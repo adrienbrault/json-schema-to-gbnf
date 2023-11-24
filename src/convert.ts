@@ -61,10 +61,13 @@ export function convertJsonSchemaToGbnf(jsonSchema: JsonSchema): string {
       let propertyGbnfName = jsonPointerToGbnfName(jsonPtr);
 
       const formatProperty = (property: string | number | undefined) =>
-        undefined !== property ? `"\\"${property}\\":" ws01 ` : null;
+        undefined !== property ? `${formatLiteral(property)} ":" ws01 ` : null;
 
       const formatRequired = (value: string, required: boolean) =>
         required ? value : `(${value})?`;
+
+      const formatLiteral = (value: string | number | boolean) =>
+        typeof value === "string" ? `"\\"${value}\\""` : `"${value}"`;
 
       if ("object" === schema.type) {
         gbnf[propertyGbnfName] =
@@ -79,7 +82,14 @@ export function convertJsonSchemaToGbnf(jsonSchema: JsonSchema): string {
               )
             )
             .join(" ") +
-          ' "}" ws01';
+          ' "}"';
+        return;
+      }
+
+      if (Array.isArray(schema.enum)) {
+        gbnf[propertyGbnfName] = `${
+          formatProperty(keyIndex) ?? ""
+        }(${schema.enum.map(formatLiteral).join(" | ")})`;
         return;
       }
 
@@ -114,13 +124,15 @@ export function convertJsonSchemaToGbnf(jsonSchema: JsonSchema): string {
       }
 
       if (schema.const !== undefined) {
-        gbnf[propertyGbnfName] = `${formatProperty(keyIndex) ?? ""}"${
-          schema.const
-        }"`;
+        gbnf[propertyGbnfName] = `${
+          formatProperty(keyIndex) ?? ""
+        }${formatLiteral(schema.const)}`;
         return;
       }
     }
   );
+
+  gbnf["root"] += " ws01";
 
   return [
     ...Object.entries(gbnf).map(([name, content]) => `${name} ::= ${content}`),
