@@ -1,6 +1,6 @@
 {
   "name": "json-schema-to-gbnf",
-  "module": "index.ts",
+  "module": "src/index.ts",
   "type": "module",
   "license": "MIT",
   "devDependencies": {
@@ -16,6 +16,6 @@
     "regexp-tree": "^0.1.27"
   },
   "scripts": {
-    "build-site": "bun build ./index.tsx --outdir ./build"
+    "build-site": "bun build ./src/index.tsx --outdir ./build"
   }
 }

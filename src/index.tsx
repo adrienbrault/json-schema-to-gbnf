@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom/client";
-import { convertJsonSchemaToGbnf } from "./src/convert";
+import { convertJsonSchemaToGbnf } from "./convert";
 
 const App = () => {
   const [input, setInput] = React.useState("");

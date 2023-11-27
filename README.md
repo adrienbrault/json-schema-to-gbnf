@@ -9,7 +9,7 @@ bun install
 To run:
 
 ```bash
-bun run index.ts "<json schema>"
+bun run src/index.ts "<json schema>"
 ```
 
 To build and run the website:
