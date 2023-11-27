@@ -1,6 +1,10 @@
+# Introduction
+
 Convert a [JSON-Schema][json_schema] to a [GBNF grammar][gbnf_grammar], to use with [llama.cpp][llama.cpp_contrained_output].
 
 This implementation aims to support more of the JSON-Schema specification than [alternatives](#alternatives).
+
+See [src/convert.test.ts](src/convert.test.ts) and [src/regexp-convert.test.ts](src/regexp-convert.test.ts) for examples of supported features.
 
 Use it online: [adrienbrault.github.io/json-schema-to-gbnf][web_url]
 
