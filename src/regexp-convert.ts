@@ -1,36 +1,29 @@
-import { formatLiteral, formatStringLength } from "./convert";
+import { Expression, AstRegExp, Char, AstClass } from "regexp-tree/ast";
+import { formatStringLength } from "./convert";
 
 const regexpTree = require("regexp-tree");
 
-type AST = {
-  type:
-    | "RegExp"
-    | "Disjunction"
-    | "Char"
-    | "Alternative"
-    | "Repetition"
-    | "CharacterClass"
-    | "Group"
-    | "ClassRange";
-  expressions?: AST[];
-} & {
-  [key: string]: any;
-};
+// Docs: https://github.com/DmitrySoshnikov/regexp-tree#ast-nodes-specification
 
-function convertAstToGbnf(ast: AST): string {
-  if ("RegExp" === ast.type) {
-    return convertAstToGbnf(ast.body);
+function isAllOfType<T extends Expression>(
+  expressions: Expression[],
+  type: AstClass
+): expressions is T[] {
+  return expressions.every((expression) => expression.type === type);
+}
+
+function convertAstToGbnf(ast: Expression | null): string {
+  if (null === ast) {
+    throw new Error("Unsupported null expression.");
   }
+
   if ("Disjunction" === ast.type) {
     return [ast.left, ast.right].map(convertAstToGbnf).join(" | ");
   }
   if ("Alternative" === ast.type && Array.isArray(ast.expressions)) {
-    const isAllChars = ast.expressions.every(
-      (expression: AST) => expression.type === "Char"
-    );
-    if (isAllChars) {
+    if (isAllOfType<Char>(ast.expressions, "Char")) {
       return `"${ast.expressions
-        .map((expression) => expression.value)
+        .map((expression: Char) => expression.value)
         .join("")}"`;
     }
     return ast.expressions.map(convertAstToGbnf).join(" ");
@@ -42,6 +35,9 @@ function convertAstToGbnf(ast: AST): string {
     if (ast.kind === "meta") {
       if (ast.value === "\\w") {
         return "[0-9A-Za-z_]";
+      }
+      if (ast.value === ".") {
+        return "string-char";
       }
     }
   }
@@ -68,16 +64,27 @@ function convertAstToGbnf(ast: AST): string {
   if ("Group" === ast.type) {
     return `(${convertAstToGbnf(ast.expression)})`;
   }
-  throw new Error(`Unsupported regexp AST: ${regexpTree.generate(ast)}`);
+  throw new Error(
+    `Unsupported regexp AST: ${regexpTree.generate(ast)} - ${JSON.stringify(
+      ast
+    )}`
+  );
 }
 
 export function convertRegexpToGbnf(regexp: string): string {
-  let parsed;
+  let parsed: AstRegExp;
   try {
     parsed = regexpTree.parse(regexp);
   } catch (error) {
     parsed = regexpTree.parse(new RegExp(regexp));
   }
 
-  return convertAstToGbnf(parsed);
+  if (
+    null === parsed.body ||
+    ("Group" === parsed.body.type && null === parsed.body.expression)
+  ) {
+    return "(string-char)*";
+  }
+
+  return convertAstToGbnf(parsed.body);
 }

@@ -16,6 +16,7 @@
     "regexp-tree": "^0.1.27"
   },
   "scripts": {
-    "build-site": "bun build ./src/index.tsx --outdir ./build"
+    "build-site": "bun build ./src/index.tsx --outdir ./build",
+    "postinstall": "mkdir -p ./node_modules/regexp-tree/ast && cp ./node_modules/regexp-tree/index.d.ts ./node_modules/regexp-tree/ast/index.d.ts"
   }
 }

@@ -14,6 +14,9 @@ const tests: Array<[string, string]> = [
   ["\\w+", `[0-9A-Za-z_]+`],
   ["\\w{0,2}", `[0-9A-Za-z_]? [0-9A-Za-z_]?`],
   ["\\w{3,}", `[0-9A-Za-z_] [0-9A-Za-z_] [0-9A-Za-z_] [0-9A-Za-z_]*`],
+  ["\\.", `"."`],
+  [".", `string-char`],
+  ["", `(string-char)*`],
 ];
 
 tests.forEach(([regexp, gbnf]) => {
