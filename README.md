@@ -19,6 +19,12 @@ bun run build-site
 bunx serve build
 ```
 
+To run tests in watch mode when developing:
+
+```bash
+bun test --watch
+```
+
 This project was created using `bun init` in bun v1.0.13. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
 
 Links:
