@@ -1,13 +1,38 @@
-name: Bun Build and Deploy to GitHub Pages
+name: Test, then Build/Deploy to GitHub Pages
 
 on:
   push:
     branches:
       - main
+  pull_request:
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install Dependencies
+        run: bun install
+
+      - name: Run Tests
+        run: bun test
+
+  build_and_deploy:
+    if: >
+      github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: test
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+    permissions:
+      pages: write
+      id-token: write
 
     steps:
       - uses: actions/checkout@v2
@@ -28,15 +53,5 @@ jobs:
         with:
           path: ./build
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-    permissions:
-      pages: write
-      id-token: write
-
-    steps:
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v2
