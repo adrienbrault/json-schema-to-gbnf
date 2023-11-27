@@ -51,7 +51,7 @@ USER="New york city."
 USER="${2:-$USER}"
 set -xe
 
-GRAMMAR="$(bun run ../json-schema-to-gbnf/index.ts "${JSON_SCHEMA}")"
+GRAMMAR="$(bun run src/index.ts "${JSON_SCHEMA}")"
 SYSTEM="You are a very accurate assistant that only writes JSON, strictly following the user instructions."
 
 echo -e "GRAMMAR\n=======\n\n${GRAMMAR}\n\n"
