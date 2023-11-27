@@ -2,8 +2,6 @@ name: Test, then Build/Deploy to GitHub Pages
 
 on:
   push:
-    branches:
-      - main
   pull_request:
 
 jobs:
