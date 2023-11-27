@@ -1,6 +1,10 @@
 import { expect, test } from "bun:test";
 import { convertJsonSchemaToGbnf, ebnfBase } from "./convert";
 
+function expectGbnfToMatch(gbnf: string, expectedGbnf: string) {
+  expect(gbnf.replace(ebnfBase, "").trim()).toBe(expectedGbnf.trim());
+}
+
 test("Convert Schema with one string property", () => {
   const jsonSchema = {
     type: "object",
@@ -15,13 +19,9 @@ test("Convert Schema with one string property", () => {
   const expectedGbnf = `
 root ::= "{" ws01 root-name "}" ws01
 root-name ::= "\\"name\\"" ":" ws01 string
-
-${ebnfBase}
 `;
 
-  const resultGbnf = convertJsonSchemaToGbnf(jsonSchema);
-
-  expect(resultGbnf).toBe(expectedGbnf.trim());
+  expectGbnfToMatch(convertJsonSchemaToGbnf(jsonSchema), expectedGbnf);
 });
 
 test("Convert Schema with two properties", () => {
@@ -54,13 +54,9 @@ root-age ::= "\\"age\\"" ":" ws01 integer
 root-active ::= "\\"active\\"" ":" ws01 boolean
 root-nullable ::= "\\"nullable\\"" ":" ws01 null
 root-weight ::= "\\"weight\\"" ":" ws01 number
-
-${ebnfBase}
 `;
 
-  const resultGbnf = convertJsonSchemaToGbnf(jsonSchema);
-
-  expect(resultGbnf).toBe(expectedGbnf.trim());
+  expectGbnfToMatch(convertJsonSchemaToGbnf(jsonSchema), expectedGbnf);
 });
 
 test("Convert Schema with nested objects", () => {
@@ -84,13 +80,9 @@ test("Convert Schema with nested objects", () => {
 root ::= "{" ws01 root-friend "}" ws01
 root-friend ::= "\\"friend\\"" ":" ws01 "{" ws01 root-friend-name "}"
 root-friend-name ::= "\\"name\\"" ":" ws01 string
-
-${ebnfBase}
 `;
 
-  const resultGbnf = convertJsonSchemaToGbnf(jsonSchema);
-
-  expect(resultGbnf).toBe(expectedGbnf.trim());
+  expectGbnfToMatch(convertJsonSchemaToGbnf(jsonSchema), expectedGbnf);
 });
 
 test("Convert Schema with arrays", () => {
@@ -114,13 +106,9 @@ root ::= "{" ws01 root-notes "," ws01 root-ages "}" ws01
 root-notes ::= "\\"notes\\"" ":" ws01 array
 root-ages ::= "\\"ages\\"" ":" ws01 "[" ws01 (root-ages-items (ws01 "," ws01 root-ages-items)*)? ws01 "]"
 root-ages-items ::= integer
-
-${ebnfBase}
 `;
 
-  const resultGbnf = convertJsonSchemaToGbnf(jsonSchema);
-
-  expect(resultGbnf).toBe(expectedGbnf.trim());
+  expectGbnfToMatch(convertJsonSchemaToGbnf(jsonSchema), expectedGbnf);
 });
 
 test("Convert Schema with anyOf", () => {
@@ -130,13 +118,9 @@ test("Convert Schema with anyOf", () => {
 
   const expectedGbnf = `
 root ::= (string | boolean) ws01
-
-${ebnfBase}
 `;
 
-  const resultGbnf = convertJsonSchemaToGbnf(jsonSchema);
-
-  expect(resultGbnf).toBe(expectedGbnf.trim());
+  expectGbnfToMatch(convertJsonSchemaToGbnf(jsonSchema), expectedGbnf);
 });
 
 test("Convert Schema with const", () => {
@@ -146,13 +130,9 @@ test("Convert Schema with const", () => {
 
   const expectedGbnf = `
 root ::= "\\"foo\\"" ws01
-
-${ebnfBase}
 `;
 
-  const resultGbnf = convertJsonSchemaToGbnf(jsonSchema);
-
-  expect(resultGbnf).toBe(expectedGbnf.trim());
+  expectGbnfToMatch(convertJsonSchemaToGbnf(jsonSchema), expectedGbnf);
 });
 
 test("Convert Schema with enum", () => {
@@ -162,13 +142,9 @@ test("Convert Schema with enum", () => {
 
   const expectedGbnf = `
 root ::= ("\\"foo\\"" | "\\"bar\\"") ws01
-
-${ebnfBase}
 `;
 
-  const resultGbnf = convertJsonSchemaToGbnf(jsonSchema);
-
-  expect(resultGbnf).toBe(expectedGbnf.trim());
+  expectGbnfToMatch(convertJsonSchemaToGbnf(jsonSchema), expectedGbnf);
 });
 
 test("Convert Schema with string enum", () => {
@@ -179,13 +155,9 @@ test("Convert Schema with string enum", () => {
 
   const expectedGbnf = `
 root ::= ("\\"foo\\"" | "\\"bar\\"") ws01
-
-${ebnfBase}
 `;
 
-  const resultGbnf = convertJsonSchemaToGbnf(jsonSchema);
-
-  expect(resultGbnf).toBe(expectedGbnf.trim());
+  expectGbnfToMatch(convertJsonSchemaToGbnf(jsonSchema), expectedGbnf);
 });
 
 test("Convert object Schema without properties", () => {
@@ -195,13 +167,9 @@ test("Convert object Schema without properties", () => {
 
   const expectedGbnf = `
 root ::= object ws01
-
-${ebnfBase}
 `;
 
-  const resultGbnf = convertJsonSchemaToGbnf(jsonSchema);
-
-  expect(resultGbnf).toBe(expectedGbnf.trim());
+  expectGbnfToMatch(convertJsonSchemaToGbnf(jsonSchema), expectedGbnf);
 });
 
 test("Convert object Schema without properties", () => {
@@ -211,13 +179,9 @@ test("Convert object Schema without properties", () => {
 
   const expectedGbnf = `
 root ::= (string | null) ws01
-
-${ebnfBase}
 `;
 
-  const resultGbnf = convertJsonSchemaToGbnf(jsonSchema);
-
-  expect(resultGbnf).toBe(expectedGbnf.trim());
+  expectGbnfToMatch(convertJsonSchemaToGbnf(jsonSchema), expectedGbnf);
 });
 
 test("Convert object Schema with a string that has a minLength", () => {
@@ -228,13 +192,9 @@ test("Convert object Schema with a string that has a minLength", () => {
 
   const expectedGbnf = `
 root ::= "\\"" string-char string-char string-char string-char string-char string-char* "\\"" ws01
-
-${ebnfBase}
 `;
 
-  const resultGbnf = convertJsonSchemaToGbnf(jsonSchema);
-
-  expect(resultGbnf).toBe(expectedGbnf.trim());
+  expectGbnfToMatch(convertJsonSchemaToGbnf(jsonSchema), expectedGbnf);
 });
 
 test("Convert object Schema with a string that has a maxLength", () => {
@@ -245,13 +205,9 @@ test("Convert object Schema with a string that has a maxLength", () => {
 
   const expectedGbnf = `
 root ::= "\\"" string-char? string-char? string-char? string-char? string-char? "\\"" ws01
-
-${ebnfBase}
 `;
 
-  const resultGbnf = convertJsonSchemaToGbnf(jsonSchema);
-
-  expect(resultGbnf).toBe(expectedGbnf.trim());
+  expectGbnfToMatch(convertJsonSchemaToGbnf(jsonSchema), expectedGbnf);
 });
 
 test("Convert object Schema with a string that has a minLength and maxLength", () => {
@@ -263,13 +219,9 @@ test("Convert object Schema with a string that has a minLength and maxLength", (
 
   const expectedGbnf = `
 root ::= "\\"" string-char string-char string-char string-char? string-char? "\\"" ws01
-
-${ebnfBase}
 `;
 
-  const resultGbnf = convertJsonSchemaToGbnf(jsonSchema);
-
-  expect(resultGbnf).toBe(expectedGbnf.trim());
+  expectGbnfToMatch(convertJsonSchemaToGbnf(jsonSchema), expectedGbnf);
 });
 
 test("Convert Schema array with minItems", () => {
@@ -280,13 +232,9 @@ test("Convert Schema array with minItems", () => {
 
   const expectedGbnf = `
 root ::= "[" ws01 value "," ws01 value "," ws01 value ("," ws01 value)* ws01 "]" ws01
-
-${ebnfBase}
 `;
 
-  const resultGbnf = convertJsonSchemaToGbnf(jsonSchema);
-
-  expect(resultGbnf).toBe(expectedGbnf.trim());
+  expectGbnfToMatch(convertJsonSchemaToGbnf(jsonSchema), expectedGbnf);
 });
 
 test("Convert Schema array with maxItems", () => {
@@ -297,13 +245,9 @@ test("Convert Schema array with maxItems", () => {
 
   const expectedGbnf = `
 root ::= "[" ws01 (value)? ("," ws01 value)? ("," ws01 value)? ws01 "]" ws01
-
-${ebnfBase}
 `;
 
-  const resultGbnf = convertJsonSchemaToGbnf(jsonSchema);
-
-  expect(resultGbnf).toBe(expectedGbnf.trim());
+  expectGbnfToMatch(convertJsonSchemaToGbnf(jsonSchema), expectedGbnf);
 });
 
 test("Convert Schema array with minItems and maxItems", () => {
@@ -315,13 +259,9 @@ test("Convert Schema array with minItems and maxItems", () => {
 
   const expectedGbnf = `
 root ::= "[" ws01 value "," ws01 value "," ws01 value ("," ws01 value)? ("," ws01 value)? ws01 "]" ws01
-
-${ebnfBase}
 `;
 
-  const resultGbnf = convertJsonSchemaToGbnf(jsonSchema);
-
-  expect(resultGbnf).toBe(expectedGbnf.trim());
+  expectGbnfToMatch(convertJsonSchemaToGbnf(jsonSchema), expectedGbnf);
 });
 
 test("Convert Schema nullable string", () => {
@@ -332,13 +272,9 @@ test("Convert Schema nullable string", () => {
 
   const expectedGbnf = `
 root ::= (string | null) ws01
-
-${ebnfBase}
 `;
 
-  const resultGbnf = convertJsonSchemaToGbnf(jsonSchema);
-
-  expect(resultGbnf).toBe(expectedGbnf.trim());
+  expectGbnfToMatch(convertJsonSchemaToGbnf(jsonSchema), expectedGbnf);
 });
 
 test("Convert Schema array of objects with properties", () => {
@@ -359,11 +295,7 @@ test("Convert Schema array of objects with properties", () => {
 root ::= \"[\" ws01 (root-items (ws01 \",\" ws01 root-items)*)? ws01 \"]\" ws01
 root-items ::= \"{\" ws01 root-items-name \"}\"
 root-items-name ::= \"\\\"name\\\"\" \":\" ws01 string
-
-${ebnfBase}
 `;
 
-  const resultGbnf = convertJsonSchemaToGbnf(jsonSchema);
-
-  expect(resultGbnf).toBe(expectedGbnf.trim());
+  expectGbnfToMatch(convertJsonSchemaToGbnf(jsonSchema), expectedGbnf);
 });
