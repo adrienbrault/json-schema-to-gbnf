@@ -44,7 +44,7 @@ function jsonPointerToGbnfName(jsonPtr: string): string {
 }
 
 export const formatLiteral = (value: string | number | boolean) =>
-  typeof value === "string" ? `"\\"${value}\\""` : `"${value}"`;
+  typeof value === "string" ? `"\\___"${value}\\""` : `"${value}"`;
 
 export const formatAlternatives = (values: string[]) =>
   `(${values.join(" | ")})`;
