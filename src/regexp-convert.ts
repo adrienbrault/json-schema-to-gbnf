@@ -1,5 +1,12 @@
-import { Expression, AstRegExp, Char, AstClass } from "regexp-tree/ast";
+import {
+  Expression,
+  AstRegExp,
+  Char,
+  AstClass,
+  Assertion,
+} from "regexp-tree/ast";
 import { formatStringLength } from "./convert";
+import { e } from "../build";
 
 const regexpTree = require("regexp-tree");
 
@@ -21,7 +28,10 @@ function convertAstToGbnf(ast: Expression | null): string {
     return [ast.left, ast.right].map(convertAstToGbnf).join(" | ");
   }
   if ("Alternative" === ast.type && Array.isArray(ast.expressions)) {
-    if (isAllOfType<Char>(ast.expressions, "Char")) {
+    if (
+      isAllOfType<Char>(ast.expressions, "Char") &&
+      ast.expressions.every((exp: Char) => exp.kind === "simple")
+    ) {
       return `"${ast.expressions
         .map((expression: Char) => expression.value)
         .join("")}"`;
@@ -29,7 +39,7 @@ function convertAstToGbnf(ast: Expression | null): string {
     return ast.expressions.map(convertAstToGbnf).join(" ");
   }
   if ("Char" === ast.type) {
-    if (ast.kind !== "meta") {
+    if (ast.kind === "simple") {
       return `"${ast.value}"`;
     }
     if (ast.kind === "meta") {
@@ -42,8 +52,11 @@ function convertAstToGbnf(ast: Expression | null): string {
     }
   }
   if ("Repetition" === ast.type) {
-    if (["+", "?"].includes(ast.quantifier.kind)) {
-      return `${convertAstToGbnf(ast.expression)}${ast.quantifier.kind}`;
+    if (["+", "?", "*"].includes(ast.quantifier.kind)) {
+      const expressionGbnf = convertAstToGbnf(ast.expression);
+      return expressionGbnf.endsWith("]") || expressionGbnf.endsWith(")")
+        ? `${convertAstToGbnf(ast.expression)}${ast.quantifier.kind}`
+        : `(${convertAstToGbnf(ast.expression)})${ast.quantifier.kind}`;
     }
     if ("Range" === ast.quantifier.kind) {
       return formatStringLength(
@@ -86,5 +99,39 @@ export function convertRegexpToGbnf(regexp: string): string {
     return "(string-char)*";
   }
 
-  return convertAstToGbnf(parsed.body);
+  let hasBeginMarker = false;
+  let hasEndMarker = false;
+
+  let ast = parsed.body;
+  if (parsed.body.type === "Alternative") {
+    let expressions = parsed.body.expressions;
+    if (expressions[0].type === "Assertion" && expressions[0].kind === "^") {
+      expressions = expressions.slice(1);
+      hasBeginMarker = true;
+    }
+    if (
+      expressions.at(-1)?.type === "Assertion" &&
+      (expressions.at(-1) as Assertion)?.kind === "$"
+    ) {
+      expressions = expressions.slice(0, -1);
+      hasEndMarker = true;
+    }
+
+    ast = {
+      ...ast,
+      type: "Alternative",
+      expressions,
+    };
+  }
+
+  let gbnf = convertAstToGbnf(ast);
+
+  if (!hasBeginMarker) {
+    gbnf = `(string-char)* ${gbnf}`;
+  }
+  if (!hasEndMarker) {
+    gbnf = `${gbnf} (string-char)*`;
+  }
+
+  return gbnf;
 }
